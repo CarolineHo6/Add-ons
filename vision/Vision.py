@@ -1,14 +1,15 @@
+import random
 import cv2
 from ultralytics import YOLO
 import time
-import webbrowser  # new import
+import webbrowser
 
 # Load YOLOv8 small model (pretrained on COCO)
 model = YOLO("yolov8n.pt")  
 
 cap = cv2.VideoCapture(0)  # webcam
 start_time = None
-threshold_seconds = 5  # how long face+phone must persist before alerting
+threshold_seconds = 2  # how long face+phone must persist before alerting
 alert_message = "You've been on your phone too long! Check job applications!"
 alert_duration = 2  # seconds the on-screen alert stays visible
 alert_until = 0
@@ -16,8 +17,17 @@ triggered = False  # ensure URLs open only once per session
 
 # Add your job application URLs here
 job_sites = [
-    "https://www.indeed.com/",
-    "https://www.linkedin.com/jobs/"
+    "https://apply.starbucks.com/careers",
+    "https://careers.baskinrobbins.com",
+    "https://botcamp.org/jobs/",
+    "https://www.realfruitbubbletea.com/career.html",
+    "https://chatime.ca/careers/",
+    "https://corp.cineplex.com/careers",
+    "https://careers.popeyes.com",
+    "https://www.bingzcanada.com/join",
+    "https://careers.mcdonalds.com",
+    "https://www.uniqlo.com/my/en/spl/careers",
+    "https://mollyteaca.com/career/"
 ]
 
 while True:
@@ -40,14 +50,14 @@ while True:
             start_time = None  # reset timer
 
             # Open job application URLs
-            for site in job_sites:
-                webbrowser.open_new(site)
+            #for site in job_sites:
+            webbrowser.open_new(job_sites[random.randint(0,10)])
             triggered = True  # mark as triggered for this session
     else:
         start_time = None
-        triggered = False  # <-- reset so it can trigger next time
+        triggered = False  # reset so it can trigger next time
 
-    # Draw bounding boxes (optional)
+    # Draw bounding boxes
     for box in results.boxes:
         cls_id = int(box.cls)
         cls_name = results.names[cls_id]
@@ -59,7 +69,7 @@ while True:
         # Draw rectangle
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-        # Draw class name only (optional)
+        # Draw class name only
         cv2.putText(frame, cls_name, (x1, y1 - 25),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
