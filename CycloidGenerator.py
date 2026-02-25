@@ -14,9 +14,7 @@ def run(context):
         root = design.rootComponent
         unitsMgr = design.unitsManager
 
-        # -------------------------
         # USER INPUTS (EDIT THESE)  (ALL IN mm)
-        # -------------------------
         N = 30                         # number of outer pins
         D_pitch_mm = 80.0              # pitch circle diameter through outer pin centers (mm)
         pointsCount = 800              # total points computed (higher = smoother)
@@ -29,32 +27,24 @@ def run(context):
         clearance_mm = 0.30            # print clearance (mm)
         # offset distance = (pin radius + clearance)
 
-        # -------------------------
         # Convert mm -> cm for Fusion API (internal units)
-        # -------------------------
         D_pitch = unitsMgr.evaluateExpression(f'{D_pitch_mm} mm', 'cm')
         outer_pin_diam = unitsMgr.evaluateExpression(f'{outer_pin_diam_mm} mm', 'cm')
         clearance = unitsMgr.evaluateExpression(f'{clearance_mm} mm', 'cm')
 
-        # -------------------------
         # Derived values (in cm)
-        # -------------------------
         R = D_pitch / 2.0       # pitch radius
         r = R / N               # generating circle radius
         k = N - 1               # lobes
 
         offset_dist = (outer_pin_diam / 2.0) + clearance  # cm
 
-        # -------------------------
         # Create a sketch on XY plane
-        # -------------------------
         sketches = root.sketches
         sketch = sketches.add(root.xYConstructionPlane)
         sketch.name = f'Cycloid_N{N}_D{D_pitch_mm:g}mm'
 
-        # -------------------------
         # Build points (decimated)
-        # -------------------------
         pts = adsk.core.ObjectCollection.create()
 
         # We compute pointsCount+1 points, but only feed Fusion every "decimate" points
@@ -70,16 +60,12 @@ def run(context):
 
             pts.add(adsk.core.Point3D.create(x, y, 0))
 
-        # -------------------------
         # Create fitted spline through points
-        # -------------------------
         spline = sketch.sketchCurves.sketchFittedSplines.add(pts)
         if make_closed:
             spline.isClosed = True
 
-        # -------------------------
         # Optional: create offset profile curve (real disc outline)
-        # -------------------------
         offset_curve = None
         if make_offset_profile:
             # Offsets in sketch
@@ -89,9 +75,7 @@ def run(context):
             if offsets and offsets.count > 0:
                 offset_curve = offsets.item(0)
 
-        # -------------------------
         # Message summary (in mm)
-        # -------------------------
         R_mm = D_pitch_mm / 2.0
         r_mm = R_mm / N
         offset_mm = (outer_pin_diam_mm / 2.0) + clearance_mm
