@@ -3,10 +3,15 @@ import cv2
 from ultralytics import YOLO
 import time
 import webbrowser
+import subprocess
+import platform
+import shutil
+import simpleaudio as sa
 
 # Load YOLOv8 small model (pretrained on COCO)
 model = YOLO("yolov8n.pt")  
 
+alert_wave = sa.WaveObject.from_wave_file("assets/alert.wav")
 cap = cv2.VideoCapture(0)  # webcam
 start_time = None
 threshold_seconds = 2  # how long face+phone must persist before alerting
@@ -30,6 +35,42 @@ job_sites = [
     "https://mollyteaca.com/career/"
 ]
 
+def open_in_guest_window(url: str) -> None:
+    """Open the URL in a guest-profile Chrome window without the profile chooser."""
+
+    system = platform.system()
+    guest_flags = ["--guest", "--new-window", "--no-first-run", "--no-default-browser-check"]
+
+    try:
+        if system == "Darwin":
+            chrome_bin = (
+                shutil.which("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+                or shutil.which("google-chrome")
+                or shutil.which("chrome")
+            )
+            if chrome_bin:
+                subprocess.Popen([chrome_bin, *guest_flags, url])
+            else:
+                subprocess.Popen(["open", "-a", "Google Chrome", url])
+        elif system == "Windows":
+            subprocess.Popen([
+                "cmd", "/c", "start", "", "chrome", *guest_flags, url
+            ])
+        else:
+            chrome_bin = (
+                shutil.which("google-chrome")
+                or shutil.which("chrome")
+                or shutil.which("chromium-browser")
+                or shutil.which("chromium")
+            )
+            if chrome_bin:
+                subprocess.Popen([chrome_bin, *guest_flags, url])
+            else:
+                webbrowser.open_new(url)
+    except Exception:
+        webbrowser.open_new(url)
+
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -42,16 +83,23 @@ while True:
     face_detected = "person" in detected_classes
     phone_detected = "cell phone" in detected_classes
 
-    if face_detected and phone_detected:
+    if face_detected and phone_detected and not triggered:
         if not start_time:
             start_time = time.time()
         elif time.time() - start_time >= threshold_seconds:
             alert_until = time.time() + alert_duration
             start_time = None  # reset timer
 
-            # Open job application URLs
-            #for site in job_sites:
-            webbrowser.open_new(job_sites[random.randint(0,10)])
+            try:
+                alert_wave.play()   # plays sound without blocking
+            except Exception as exc:
+                print(f"Audio play failed: {exc}")
+
+            # Open job application URL in a new guest-profile Chrome window
+            try:
+                open_in_guest_window(job_sites[random.randint(0,10)])
+            except Exception as exc:
+                print(f"Browser launch failed: {exc}")
             triggered = True  # mark as triggered for this session
     else:
         start_time = None
@@ -96,4 +144,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
