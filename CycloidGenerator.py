@@ -34,7 +34,10 @@ def run(context):
 
         # Derived values (in cm)
         R = D_pitch / 2.0       # pitch radius
-        r = R / N               # generating circle radius
+        contraction_mm = 0.25
+        contraction = unitsMgr.evaluateExpression(f'{contraction_mm} mm', 'cm')
+
+        r = (R / N) - contraction   # generating cicle radius
         k = N - 1               # lobes
 
         offset_dist = (outer_pin_diam / 2.0) + clearance  # cm
@@ -106,3 +109,4 @@ def run(context):
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
