@@ -21,9 +21,9 @@ alert_wave = sa.WaveObject.from_wave_file("assets/alert.wav")
 cv2.namedWindow("YOLO Phone Detector", cv2.WINDOW_NORMAL)
 cap = cv2.VideoCapture(0)  # webcam
 start_time = None
-threshold_seconds = 1  # how long face+phone must persist before alerting
-alert_message = "You've been on your phone too long! Check job applications!"
-alert_duration = 2  # seconds the on-screen alert stays visible
+threshold_seconds = 1  # detect face and phone time
+alert_message = "Stop doomscrolling u bum bum"
+alert_duration = 2  # sec alert stays on screen
 alert_until = 0
 triggered = False  # ensure URLs open only once per session
 chrome_bin = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -36,7 +36,6 @@ def reset_camera():
     time.sleep(0.05)
     return cv2.VideoCapture(0)
 
-# Add your job application URLs here
 job_sites = [
     "https://apply.starbucks.com/careers",
     "https://careers.baskinrobbins.com",
@@ -113,10 +112,10 @@ while True:
             time.sleep(0.1)
             continue
 
-        results = model.predict(source=frame, verbose=False, device='cpu')[0]  # run YOLO detection on the frame
+        results = model.predict(source=frame, verbose=False, device='cpu')[0]  # YOLO detection on frame
         detected_classes = [results.names[int(box.cls)] for box in results.boxes]
         
-        # Check if both a person (for face) and a phone are detected
+        # check if both person and phone are detected
         face_detected = "person" in detected_classes
         phone_detected = "cell phone" in detected_classes
 
@@ -127,12 +126,13 @@ while True:
                 alert_until = time.time() + alert_duration
                 start_time = None  # reset timer
 
-                try:
-                    alert_wave.play()   # plays sound without blocking
-                except Exception as exc:
-                    print(f"Audio play failed: {exc}")
+                # try:
+                #     # alert_wave.play()   # plays sound without blocking
+                #     print(1)
+                # except Exception as exc:
+                #     print(f"Audio play failed: {exc}")
 
-                # Open job application URL in a new guest-profile Chrome window
+                # open job in new window
                 url_to_open = job_sites[random.randint(0, 10)]
                 print(f"Opening job site: {url_to_open}")
                 try:
@@ -144,27 +144,27 @@ while True:
             start_time = None
             triggered = False  # reset so it can trigger next time
 
-        # Draw bounding boxes
+        # bounding boxes
         for box in results.boxes:
             cls_id = int(box.cls)
             cls_name = results.names[cls_id]
-            conf = float(box.conf[0])  # <-- get confidence
+            conf = float(box.conf[0])  # get confidence
 
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             color = (0, 255, 0) if cls_name == "person" else (0, 0, 255)
 
-            # Draw rectangle
+            # draw rectangle
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-            # Draw class name only
+            # draw class name only
             cv2.putText(frame, cls_name, (x1, y1 - 25),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-            # Draw class name + confidence
+            # draw class name + confidence
             cv2.putText(frame, f"{cls_name} {conf:.2f}", (x1, y1 - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        # Show the alert text on the frame
+        # show alert text on frame
         if time.time() < alert_until:
             cv2.putText(
                 frame,
