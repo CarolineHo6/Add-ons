@@ -6,8 +6,8 @@ import cv2
 import torch
 
 from config import WINDOW_NAME, load_config
-from detector import load_model, read_detections, reset_camera
-from overlays import draw_detections, draw_status
+from detector import analyze_phone_posture, load_model, reset_camera
+from overlays import draw_calibration, draw_detections, draw_status
 from trigger import TriggerState, update_trigger
 
 
@@ -17,7 +17,7 @@ def run() -> None:
     model = load_model(config)
     cap = cv2.VideoCapture(config["camera_index"])
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    trigger_state = TriggerState()
+    trigger_state = TriggerState(config)
 
     while True:
         try:
@@ -33,17 +33,27 @@ def run() -> None:
                 continue
 
             results = model.predict(source=frame, verbose=False, device=config["device"])[0]
-            person_detected, phone_detected = read_detections(results, config)
-            update_trigger(trigger_state, person_detected, phone_detected, config)
+            analysis = analyze_phone_posture(results, config)
+            update_trigger(
+                trigger_state,
+                analysis["person_detected"],
+                analysis["phone_detected"],
+                analysis["looking_down_at_phone"],
+                config,
+            )
 
             draw_detections(frame, results, config)
+            if config["calibration_mode"]:
+                draw_calibration(frame, analysis, config)
             draw_status(
                 frame,
-                person_detected,
-                phone_detected,
+                analysis["person_detected"],
+                analysis["phone_detected"],
+                analysis["looking_down_at_phone"],
                 trigger_state.start_time,
                 trigger_state.cooldown_until,
                 trigger_state.alert_until,
+                trigger_state.phone_uses_today,
                 config,
             )
 
@@ -51,7 +61,11 @@ def run() -> None:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
             cv2.imshow(WINDOW_NAME, frame)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("c"):
+                config["calibration_mode"] = not config["calibration_mode"]
+                print(f"Calibration mode: {config['calibration_mode']}")
+            elif key == ord("q"):
                 break
             time.sleep(config["frame_delay_seconds"])
         except KeyboardInterrupt:

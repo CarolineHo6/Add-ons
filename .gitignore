@@ -31,3 +31,6 @@ venv/
 # Large model/weight files
 *.pt
 *.onnx
+
+# Runtime logs
+logs/
