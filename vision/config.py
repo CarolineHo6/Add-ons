@@ -29,6 +29,12 @@ DEFAULT_CONFIG = {
     "alert_message": "Stop doomscrolling u bum bum",
     "alert_duration_seconds": 2.0,
     "frame_delay_seconds": 0.005,
+    "notifications_enabled": True,
+    "notification_title": "Phone use detected",
+    "notification_message": (
+        "Trigger #{phone_uses_today} today. "
+        "Lockdown active for {lockdown_minutes} minute(s)."
+    ),
     "log_path": "logs/phone_usage.jsonl",
     "lockdown_enabled": True,
     "lockdown_duration_seconds": 300.0,

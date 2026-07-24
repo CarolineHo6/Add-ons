@@ -3,6 +3,7 @@ import time
 
 from browser import open_in_guest_window
 from lockdown import start_lockdown
+from notifications import send_notification
 from phone_log import count_phone_uses_today, record_phone_use
 
 
@@ -44,6 +45,11 @@ def update_trigger(
             state.phone_uses_today = record_phone_use(config, url_to_open)
             print(f"Phone uses today: {state.phone_uses_today}")
             start_lockdown(state, config, now)
+            send_notification(
+                config,
+                state.phone_uses_today,
+                state.current_lockdown_duration_seconds,
+            )
             state.alert_until = now + config["alert_duration_seconds"]
             state.cooldown_until = now + config["cooldown_seconds"]
             state.start_time = None
