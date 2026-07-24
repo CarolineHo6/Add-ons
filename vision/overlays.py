@@ -35,6 +35,7 @@ def draw_status(
     start_time: float | None,
     cooldown_until: float,
     alert_until: float,
+    lockdown_until: float,
     phone_uses_today: int,
     config: dict,
 ) -> None:
@@ -42,6 +43,7 @@ def draw_status(
     elapsed = 0 if start_time is None else now - start_time
     trigger_remaining = max(config["trigger_seconds"] - elapsed, 0)
     cooldown_remaining = max(cooldown_until - now, 0)
+    lockdown_remaining = max(lockdown_until - now, 0)
 
     status_lines = [
         f"Person: {'yes' if person_detected else 'no'}",
@@ -49,6 +51,7 @@ def draw_status(
         f"Looking down: {'yes' if looking_down_at_phone else 'no'}",
         f"Trigger in: {trigger_remaining:.1f}s",
         f"Cooldown: {cooldown_remaining:.0f}s",
+        f"Lockdown: {lockdown_remaining:.0f}s",
         f"Phone uses today: {phone_uses_today}",
         f"Calibration: {'on' if config['calibration_mode'] else 'off'}",
     ]
@@ -68,7 +71,7 @@ def draw_status(
         cv2.putText(
             frame,
             config["alert_message"],
-            (20, 180),
+            (20, 230),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.8,
             (0, 0, 255),
@@ -110,7 +113,7 @@ def draw_calibration(frame, analysis: dict, config: dict) -> None:
         cv2.putText(
             frame,
             line,
-            (20, 230 + index * 22),
+            (20, 280 + index * 22),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.55,
             (255, 255, 0),

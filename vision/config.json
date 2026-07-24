@@ -16,6 +16,29 @@
   "alert_duration_seconds": 2.0,
   "frame_delay_seconds": 0.005,
   "log_path": "logs/phone_usage.jsonl",
+  "lockdown_enabled": true,
+  "lockdown_duration_seconds": 300.0,
+  "lockdown_check_interval_seconds": 3.0,
+  "blocked_apps": [
+    "YouTube",
+    "Instagram",
+    "TikTok",
+    "Discord",
+    "Steam",
+    "Spotify"
+  ],
+  "blocked_site_keywords": [
+    "youtube.com",
+    "youtu.be",
+    "instagram.com",
+    "tiktok.com",
+    "twitter.com",
+    "x.com",
+    "reddit.com",
+    "netflix.com",
+    "twitch.tv",
+    "discord.com"
+  ],
   "job_sites": [
     "https://apply.starbucks.com/careers",
     "https://careers.baskinrobbins.com",

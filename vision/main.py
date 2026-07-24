@@ -7,6 +7,7 @@ import torch
 
 from config import WINDOW_NAME, load_config
 from detector import analyze_phone_posture, load_model, reset_camera
+from lockdown import enforce_lockdown
 from overlays import draw_calibration, draw_detections, draw_status
 from trigger import TriggerState, update_trigger
 
@@ -41,6 +42,7 @@ def run() -> None:
                 analysis["looking_down_at_phone"],
                 config,
             )
+            enforce_lockdown(trigger_state, config)
 
             draw_detections(frame, results, config)
             if config["calibration_mode"]:
@@ -53,6 +55,7 @@ def run() -> None:
                 trigger_state.start_time,
                 trigger_state.cooldown_until,
                 trigger_state.alert_until,
+                trigger_state.lockdown_until,
                 trigger_state.phone_uses_today,
                 config,
             )
