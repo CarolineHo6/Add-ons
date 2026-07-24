@@ -13,6 +13,7 @@ class TriggerState:
         self.cooldown_until = 0
         self.lockdown_until = 0
         self.last_lockdown_enforced = 0
+        self.current_lockdown_duration_seconds = 0
         self.phone_uses_today = count_phone_uses_today(config)
 
 

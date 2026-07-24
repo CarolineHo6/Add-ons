@@ -9,6 +9,7 @@ from config import WINDOW_NAME, load_config
 from detector import analyze_phone_posture, load_model, reset_camera
 from lockdown import enforce_lockdown
 from overlays import draw_calibration, draw_detections, draw_status
+from posture import PostureDetector, combine_phone_and_posture
 from trigger import TriggerState, update_trigger
 
 
@@ -19,6 +20,7 @@ def run() -> None:
     cap = cv2.VideoCapture(config["camera_index"])
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
     trigger_state = TriggerState(config)
+    posture_detector = PostureDetector(config)
 
     while True:
         try:
@@ -35,27 +37,31 @@ def run() -> None:
 
             results = model.predict(source=frame, verbose=False, device=config["device"])[0]
             analysis = analyze_phone_posture(results, config)
+            posture_analysis = posture_detector.analyze(frame, config)
+            looking_down_at_phone = combine_phone_and_posture(analysis, posture_analysis, config)
             update_trigger(
                 trigger_state,
                 analysis["person_detected"],
                 analysis["phone_detected"],
-                analysis["looking_down_at_phone"],
+                looking_down_at_phone,
                 config,
             )
             enforce_lockdown(trigger_state, config)
 
             draw_detections(frame, results, config)
             if config["calibration_mode"]:
-                draw_calibration(frame, analysis, config)
+                draw_calibration(frame, analysis, posture_analysis, config)
             draw_status(
                 frame,
                 analysis["person_detected"],
                 analysis["phone_detected"],
-                analysis["looking_down_at_phone"],
+                looking_down_at_phone,
+                posture_analysis,
                 trigger_state.start_time,
                 trigger_state.cooldown_until,
                 trigger_state.alert_until,
                 trigger_state.lockdown_until,
+                trigger_state.current_lockdown_duration_seconds,
                 trigger_state.phone_uses_today,
                 config,
             )
@@ -82,6 +88,7 @@ def run() -> None:
             continue
 
     cap.release()
+    posture_detector.close()
     cv2.destroyAllWindows()
     print("Exited main loop; resources released.")
 

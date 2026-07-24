@@ -8,9 +8,26 @@ def start_lockdown(state, config: dict, now: float | None = None) -> None:
         return
 
     current_time = time.time() if now is None else now
-    state.lockdown_until = current_time + config["lockdown_duration_seconds"]
+    duration_seconds = get_lockdown_duration(config, state.phone_uses_today)
+    state.current_lockdown_duration_seconds = duration_seconds
+    state.lockdown_until = current_time + duration_seconds
     state.last_lockdown_enforced = 0
-    print(f"Lockdown active for {config['lockdown_duration_seconds']:.0f} seconds.")
+    print(
+        f"Lockdown active for {duration_seconds:.0f} seconds "
+        f"after {state.phone_uses_today} phone use(s) today."
+    )
+
+
+def get_lockdown_duration(config: dict, phone_uses_today: int) -> float:
+    if not config["daily_limit_mode_enabled"]:
+        return config["lockdown_duration_seconds"]
+
+    duration_seconds = config["lockdown_duration_seconds"]
+    sorted_tiers = sorted(config["daily_lockdown_tiers"], key=lambda tier: tier["uses"])
+    for tier in sorted_tiers:
+        if phone_uses_today >= tier["uses"]:
+            duration_seconds = tier["duration_seconds"]
+    return duration_seconds
 
 
 def lockdown_remaining(state) -> float:
